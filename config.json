@@ -1,4 +1,9 @@
 {
   "image_height": 256,
-  "image_width": 256
+  "image_width": 256,
+  "epochs": 40,
+  "batch_size": 8,
+  "lr": 2e-4,
+  "checkpoint_dir": "./checkpoints/",
+  "log_dir": "./logs/"
 }
