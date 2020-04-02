@@ -83,3 +83,44 @@ class ImageDepthModel:
                     tf.summary.image('train/val_dataset/ground_truth', example_target * 0.5 + 0.5, epoch)
                     tf.summary.image('train/val_dataset/prediction', prediction * 0.5 + 0.5, epoch)
                 print('Time taken for epoch {} is {} sec\n'.format(epoch + 1, time() - start))
+
+    def resize(self, input_image, real_image=None, height=256, width=256):
+        input_image = tf.image.resize(
+            input_image, [height, width],
+            method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+        )
+        if real_image is not None:
+            real_image = tf.image.resize(
+                real_image, [height, width],
+                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+            )
+            return input_image, real_image
+        return input_image
+
+    def normalize(self, input_image, real_image=None):
+        input_image = (input_image / 127.5) - 1
+        if real_image is not None:
+            real_image = (real_image / 127.5) - 1
+            return input_image, real_image
+        return input_image
+
+    def predict(self, image_file, paired_file=False):
+        image = tf.io.read_file(image_file)
+        image = tf.image.decode_jpeg(image)
+        image.set_shape([None, None, 3])
+        if paired_file:
+            w = tf.shape(image)[1]
+            w = w // 2
+            real_image = image[:, w:, :]
+            input_image = image[:, : w, :]
+            input_image = tf.cast(input_image, tf.float32)
+            real_image = tf.cast(real_image, tf.float32)
+            input_image, real_image = self.resize(input_image, real_image)
+            input_image, real_image = self.normalize(input_image, real_image)
+            prediction = self.generator(tf.expand_dims(input_image, axis=0))
+            return input_image * 0.5 + 0.5, real_image * 0.5 + 0.5, prediction * 0.5 + 0.5
+        input_image = image
+        input_image = self.resize(input_image)
+        input_image = self.normalize(input_image)
+        prediction = self.generator(tf.expand_dims(input_image, axis=0))
+        return input_image * 0.5 + 0.5, prediction * 0.5 + 0.5
