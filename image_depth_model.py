@@ -65,10 +65,10 @@ class ImageDepthModel:
 
     def train(self, epochs, checkpoint_step=5):
         with self.summary_writer.as_default():
+            iteration = 0
             for epoch in range(1, epochs + 1):
                 start = time()
                 print('Epoch', str(epoch), 'going on....')
-                iteration = 0
                 for input_image, target in tqdm(self.train_dataset):
                     gen_loss, disc_loss = self.train_step(input_image, target)
                     iteration += 1
